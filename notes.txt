@@ -1,0 +1,81 @@
+CREATE TABLE teams(
+  team_id SERIAL PRIMARY KEY,
+  name VARCHAR(20) UNIQUE
+);
+
+CREATE TABLE games(
+  game_id SERIAL PRIMARY KEY,
+  year INT,
+  round VARCHAR(20)
+);
+
+ALTER TABLE games ADD COLUMN winner_id INT;
+
+
+SELECT team_id FROM teams WHERE name='$WINNER';
+
+SELECT DISTINCT(name) FROM teams AS t
+  INNER JOIN games AS gw ON t.team_id = gw.winner_id
+  INNER JOIN games AS go ON t.team_id = go.opponent_id
+  WHERE (gw.year=2014 OR go.year=2014) 
+  AND (gw.round='Eighth-Final' OR go.round='Eighth-Final');
+
+SELECT * FROM teams
+  FULL JOIN games ON teams.team_id = games.winner_id
+  WHERE year=2014 AND round='Eighth-Final'
+  ORDER BY name;
+
+SELECT * FROM games
+  RIGHT JOIN teams AS wt ON games.winner_id = wt.team_id
+  RIGHT JOIN teams AS ot ON games.opponent_id = ot.team_id
+  WHERE year=2014 AND round='Eighth-Final'
+  ORDER BY wt.name;
+
+# concatenate the winner_id and opponent_id into one column
+SELECT DISTINCT(winner_id) FROM games;
+
+SELECT DISTINCT(name) FROM teams
+  LEFT JOIN games ON team_id = games.winner_id
+  RIGHT JOIN teams AS ot ON ot.team_id = games.opponent_id
+  WHERE year=2014 AND round='Eighth-Final';
+
+SELECT * FROM games LEFT JOIN teams ON teams.team_id = games.winner_id LEFT JOIN teams AS ot ON ot.team_id =
+games.opponent_id WHERE LIMIT 10;
+
+SELECT team_id, name, winning_game.opponent_id AS loser, losing_game.winner_id AS winner, losing_game.year AS year, losing_game.round AS round
+  FROM teams
+  FULL JOIN games AS winning_game ON teams.team_id = winning_game.winner_id
+  HAVING winning_game.year = 2014 AND winning_game.round='Eigth-Final'
+  FULL JOIN games AS losing_game ON teams.team_id = losing_game.opponent_id
+  HAVING losing_game.year=2014 AND losing_game.round='Eighth-Final'
+  LIMIT 20;
+
+SELECT teams.name, teams.team_id, year, round FROM teams
+  LEFT JOIN games ON teams.team_id = games.winner_id
+  WHERE year=2014 AND round='Eighth-Final'
+  GROUP BY teams.team_id;
+
+## Get team ids of everyone that participated in one column
+
+SELECT DISTINCT(name) FROM teams
+  LEFT JOIN games AS win ON teams.team_id = win.winner_id
+  WHERE year=2014 
+  AND round='Eighth-Final'
+UNION
+SELECT DISTINCT(name) FROM teams
+  LEFT JOIN games AS lose ON teams.team_id = lose.opponent_id
+  WHERE year=2014
+  AND round='Eighth-Final';
+
+
+SELECT DISTINCT(name) FROM teams
+  RIGHT JOIN games ON teams.team_id = games.winner_id
+  ORDER BY name;
+
+SELECT year, teams.name FROM games
+  INNER JOIN teams ON games.winner_id = teams.team_id
+  WHERE round='Final'
+  ORDER BY year;
+
+SELECT name FROM teams
+  WHERE name LIKE 'Co%';
